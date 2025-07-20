@@ -5,10 +5,10 @@ public class CreateTables {
     public static void create() {
         try (Connection conn = DBConnection.getConnection(); Statement stmt = conn.createStatement()) {
 
-            // Drop tables if they exist (for resetting)
-            stmt.execute("DROP TABLE IF EXISTS books;");
-            stmt.execute("DROP TABLE IF EXISTS categories;");
-            stmt.execute("DROP TABLE IF EXISTS users;");
+//            // Drop tables if they exist (for resetting)
+//            stmt.execute("DROP TABLE IF EXISTS books;");
+//            stmt.execute("DROP TABLE IF EXISTS categories;");
+//            stmt.execute("DROP TABLE IF EXISTS users;");
 
             // Create users table
             stmt.execute("CREATE TABLE IF NOT EXISTS users (" +

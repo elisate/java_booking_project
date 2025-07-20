@@ -1,20 +1,22 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
 
 public class AdminDashboard extends JFrame {
-    private JTextArea outputArea;
+    private JTable table;
+    private DefaultTableModel tableModel;
 
     public AdminDashboard() {
         setTitle("Admin Dashboard");
-        setSize(600, 400);
+        setSize(800, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // UI Components
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(outputArea);
+        // Set up table
+        tableModel = new DefaultTableModel();
+        table = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(table);
 
         JButton btnViewUsers = new JButton("View All Users");
         JButton btnAddBook = new JButton("Add New Book");
@@ -38,22 +40,50 @@ public class AdminDashboard extends JFrame {
     }
 
     private void showAllUsers() {
-        outputArea.setText(""); // Clear previous
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:BookApp.db")) {
             String query = "SELECT id, name, email, role FROM users";
             PreparedStatement stmt = conn.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
 
+            tableModel.setRowCount(0); // Clear table
+            tableModel.setColumnIdentifiers(new String[]{"ID", "Name", "Email", "Role"});
+
             while (rs.next()) {
-                outputArea.append(
-                        "ID: " + rs.getInt("id") +
-                                ", Name: " + rs.getString("name") +
-                                ", Email: " + rs.getString("email") +
-                                ", Role: " + rs.getString("role") + "\n"
-                );
+                Object[] row = {
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("role")
+                };
+                tableModel.addRow(row);
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error fetching users: " + e.getMessage());
+        }
+    }
+
+    private void showAllBooks() {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:BookApp.db")) {
+            String query = "SELECT b.id, b.title, b.author, b.price, c.name AS category_name " +
+                    "FROM books b LEFT JOIN categories c ON b.category_id = c.id";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+
+            tableModel.setRowCount(0); // Clear table
+            tableModel.setColumnIdentifiers(new String[]{"ID", "Title", "Author", "Price", "Category"});
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getDouble("price"),
+                        rs.getString("category_name")
+                };
+                tableModel.addRow(row);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "❌ Error fetching books: " + e.getMessage());
         }
     }
 
@@ -64,7 +94,7 @@ public class AdminDashboard extends JFrame {
 
         if (title != null && author != null && categoryName != null) {
             try (Connection conn = DriverManager.getConnection("jdbc:sqlite:BookApp.db")) {
-                conn.setAutoCommit(false); // start transaction
+                conn.setAutoCommit(false); // Start transaction
 
                 int categoryId;
                 String selectSql = "SELECT id FROM categories WHERE name = ?";
@@ -109,29 +139,6 @@ public class AdminDashboard extends JFrame {
                 JOptionPane.showMessageDialog(this, "❌ Error adding book: " + e.getMessage());
                 e.printStackTrace();
             }
-        }
-    }
-
-    private void showAllBooks() {
-        outputArea.setText("");
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:BookApp.db")) {
-            String query = "SELECT b.id, b.title, b.author, b.price, c.name AS category_name " +
-                    "FROM books b LEFT JOIN categories c ON b.category_id = c.id";
-
-            PreparedStatement stmt = conn.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                outputArea.append(
-                        "ID: " + rs.getInt("id") +
-                                ", Title: " + rs.getString("title") +
-                                ", Author: " + rs.getString("author") +
-                                ", Price: " + rs.getDouble("price") +
-                                ", Category: " + rs.getString("category_name") + "\n"
-                );
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "❌ Error fetching books: " + e.getMessage());
         }
     }
 

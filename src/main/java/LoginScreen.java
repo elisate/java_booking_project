@@ -12,7 +12,6 @@ public class LoginScreen extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Layout
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -48,7 +47,6 @@ public class LoginScreen extends JFrame {
             new RegisterScreen();
         });
 
-        // Add panel to frame
         add(panel);
         setVisible(true);
     }
@@ -58,17 +56,30 @@ public class LoginScreen extends JFrame {
         String password = String.valueOf(passwordField.getPassword());
 
         try (Connection conn = DBConnection.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement("SELECT role FROM users WHERE email = ? AND password = ?");
+            // Fetch full user info
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT id, name, email, role FROM users WHERE email = ? AND password = ?"
+            );
             stmt.setString(1, email);
             stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String userEmail = rs.getString("email");
                 String role = rs.getString("role");
+
+                User loggedInUser = new User(id, name, userEmail, role);
+
                 JOptionPane.showMessageDialog(this, "Login successful as " + role);
                 dispose();
-                if ("admin".equals(role)) new AdminDashboard();
-                else new UserDashboard();
+
+                if ("admin".equalsIgnoreCase(role)) {
+                    new AdminDashboard();
+                } else {
+                    new UserDashboard(loggedInUser);  // Pass user to dashboard!
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid email or password!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -76,5 +87,10 @@ public class LoginScreen extends JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Login failed. Try again.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // For quick testing
+    public static void main(String[] args) {
+        new LoginScreen();
     }
 }

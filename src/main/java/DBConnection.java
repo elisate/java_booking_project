@@ -1,15 +1,15 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
-public class DBConnection {
+public final class DBConnection {
     private static final String URL = "jdbc:sqlite:BookApp.db";
 
-    public static Connection getConnection() {
-        try {
-            return DriverManager.getConnection(URL);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    private DBConnection() {
+        // Prevent instantiation
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL);
     }
 }
